@@ -11,7 +11,6 @@ class FacePortraitCropper:
     """
     Класс для обнаружения лиц и создания портретов с расширенной областью
     """
-    
     def __init__(self, expand_percentage: float = 0.2):
         """
         Args:
@@ -53,11 +52,9 @@ class FacePortraitCropper:
         Returns:
             Tuple: Новые координаты (x, y, w, h)
         """
-        # Вычисляем расширение
         expand_w = int(w * self.expand_percentage)
         expand_h = int(h * self.expand_percentage)
         
-        # Новые координаты с расширением
         new_x = max(0, x - expand_w // 2)
         new_y = max(0, y - expand_h // 2)
         new_w = min(img_width - new_x, w + expand_w)
@@ -80,7 +77,7 @@ class FacePortraitCropper:
         
         faces = []
         for detection in detections:
-            if detection['confidence'] > 0.9:  # Высокий порог уверенности
+            if detection['confidence'] > 0.9:
                 x, y, w, h = detection['box']
                 faces.append((x, y, w, h))
                 
@@ -100,11 +97,9 @@ class FacePortraitCropper:
         x, y, w, h = bbox
         height, width = image.shape[:2]
         
-        # Расширяем bounding box
         expanded_bbox = self.expand_bbox(x, y, w, h, width, height)
         ex, ey, ew, eh = expanded_bbox
         
-        # Обрезаем изображение
         portrait = image[ey:ey+eh, ex:ex+ew]
         
         return portrait
@@ -120,7 +115,6 @@ class FacePortraitCropper:
         Returns:
             List[str]: Список путей к сохраненным портретам
         """
-        # Загрузка изображения
         if not os.path.exists(input_path):
             raise FileNotFoundError(f"Input file not found: {input_path}")
             
@@ -130,17 +124,13 @@ class FacePortraitCropper:
         
         image = self.read_and_preprocess(image)
         
-        # Детекция лиц
         faces = self.detect_faces(image)
         
         saved_paths = []
         
-        # Сохранение портретов для каждого найденного лица
         for i, face in enumerate(faces):
-            # Создаем портрет
             portrait = self.crop_portrait(image, face)
             
-            # Генерируем имя файла
             base_name = os.path.splitext(output_path)[0]
             ext = os.path.splitext(output_path)[1]
             
@@ -149,11 +139,9 @@ class FacePortraitCropper:
             else:
                 portrait_path = output_path
             
-            # Создаем директорию если нужно
             os.makedirs(os.path.dirname(portrait_path) if os.path.dirname(portrait_path) else '.', 
                        exist_ok=True)
             
-            # Сохраняем портрет
             success = cv2.imwrite(portrait_path, portrait)
             if success:
                 saved_paths.append(portrait_path)
@@ -210,17 +198,14 @@ def main():
     
     args = parser.parse_args()
     
-    # Инициализация обработчика
     cropper = FacePortraitCropper(expand_percentage=args.expand)
     
     try:
         if args.batch:
-            # Пакетная обработка директории
             print(f"Processing image series from: {args.input}")
             saved_paths = cropper.process_image_series(args.input, args.output)
             print(f"Successfully processed {len(saved_paths)} portraits")
         else:
-            # Обработка одного изображения
             print(f"Processing single image: {args.input}")
             saved_paths = cropper.process_single_image(args.input, args.output)
             print(f"Successfully created {len(saved_paths)} portrait(s)")
